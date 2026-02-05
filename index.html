@@ -301,12 +301,17 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.
             if(isEco) color = '#39ff14';
             document.documentElement.style.setProperty('--primary', color);
 
-            // Gestion Fond (Nuit assombrit fortement)
-            const overlayOpacity = isNight ? 0.9 : 0.6;
             // Gestion Fond
-            const opacite = isSummer ? 0.4 : 0.7;
+            let opacite = isSummer ? 0.4 : 0.7;
+            
+            // Si le mode nuit est actif, on force l'obscurité (0.9)
+            if (isNight) opacite = 0.9;
+
             const imgName = isSummer ? 'ete.jpg' : 'hiver.jpg';
-            document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${imgName}')`;
+            
+            // Vérification dans la console (F12)
+            console.log("Mise à jour fond :", imgName, "Opacité :", opacite);
+
             document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,${opacite}), rgba(0,0,0,${opacite})), url('${imgName}')`;
         }
 
@@ -388,8 +393,3 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.
     </script>
 </body>
 </html>
-
-
-
-
-
