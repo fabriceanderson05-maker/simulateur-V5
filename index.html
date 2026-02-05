@@ -116,6 +116,23 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.
 
         /* Zone Graphique */
         .chart-wrapper { height: 120px; width: 100%; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 10px; box-sizing: border-box; }
+
+        /* --- NOUVEAU CSS PÉDAGOGIQUE --- */
+        /* Styles du tableau */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
+        th { text-align: left; color: var(--primary); border-bottom: 1px solid rgba(255,255,255,0.2); padding: 5px; }
+        td { padding: 8px 5px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #eee; }
+        
+        /* Fenêtre Modale (Overlay) */
+        .modal-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+            z-index: 100; display: none; justify-content: center; align-items: center;
+            border-radius: 30px;
+        }
+        .modal-box { background: #1a1d23; padding: 30px; border-radius: 20px; width: 80%; max-width: 600px; border: 1px solid var(--primary); position: relative; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        .close-btn { position: absolute; top: 15px; right: 20px; cursor: pointer; font-size: 1.5rem; color: var(--text-dim); transition: 0.3s; }
+        .close-btn:hover { color: white; }
     </style>
 </head>
 <body>
@@ -177,11 +194,22 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.
 
         <!-- Footer -->
         <div class="footer-controls">
-            <button class="btn" onclick="alert('Historique non disponible en démo')">📊 HISTORIQUE</button>
+            <button class="btn" onclick="openHistory()">📊 HISTORIQUE</button>
             <button class="btn" id="ecoBtn" onclick="toggleEco()">🍃 MODE ÉCO</button>
             <button class="btn" id="nightBtn" onclick="toggleNight()">🌙 MODE NUIT</button>
-            <button class="btn" onclick="alert('Dexforma V5.0 - Système Intelligent')">⚙️ INFOS</button>
+            <button class="btn" onclick="openInfos()">⚙️ INFOS</button>
         </div>
+
+        <!-- NOUVEAU : Structure des Modales (Cachée par défaut) -->
+        <div id="modalOverlay" class="modal-overlay" onclick="if(event.target === this) closeModal()">
+            <div class="modal-box">
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+                <div id="modalContent">
+                    <!-- Le contenu sera injecté ici par JS -->
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -303,10 +331,10 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.
             document.documentElement.style.setProperty('--primary', color);
 
             // Gestion Fond
-            let opacite = isSummer ? 0.2 : 0.6;
+            let opacite = isSummer ? 0.2 : 0.7;
             
             // Si le mode nuit est actif, on force l'obscurité (0.9)
-            if (isNight) opacite = 0.8;
+            if (isNight) opacite = 0.7;
 
             // Assombrissement du conteneur en mode nuit
             const glassBg = isNight ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.5)';
@@ -395,7 +423,86 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.
         setInterval(() => {
             updateChart(currentPower);
         }, 1000);
+
+        // --- FONCTIONS PÉDAGOGIQUES AJOUTÉES ---
+        
+        let logs = []; // Pour stocker les données
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalContent = document.getElementById('modalContent');
+
+        function closeModal() {
+            modalOverlay.style.display = 'none';
+        }
+
+        function openHistory() {
+            renderHistory(); // Affiche le tableau
+            modalOverlay.style.display = 'flex';
+        }
+
+        function openInfos() {
+            showPedagoInfos();
+            modalOverlay.style.display = 'flex';
+        }
+
+        function addMeasureToHistory() {
+            const now = new Date();
+            const time = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0') + ":" + now.getSeconds().toString().padStart(2, '0');
+            
+            const entry = {
+                heure: time,
+                saison: isSummer ? "Été" : "Hiver",
+                conso: currentPower + " kW",
+                efficacite: currentCop.toFixed(2)
+            };
+            
+            logs.unshift(entry); // Ajoute au début
+            if(logs.length > 8) logs.pop(); // Garde les 8 dernières
+            
+            renderHistory(); // Rafraîchit l'affichage
+        }
+
+        function renderHistory() {
+            let html = `<h3>HISTORIQUE DES RELEVÉS</h3>
+                        <button class="btn" onclick="addMeasureToHistory()" style="width:100%; margin-bottom:15px; background:var(--primary); color:black!important;">📷 ENREGISTRER LA MESURE ACTUELLE</button>
+                        <table><tr><th>Heure</th><th>Saison</th><th>Conso</th><th>COP</th></tr>`;
+            
+            logs.forEach(l => {
+                html += `<tr><td>${l.heure}</td><td>${l.saison}</td><td>${l.conso}</td><td>${l.efficacite}</td></tr>`;
+            });
+            html += "</table>";
+            if(logs.length === 0) html += "<p style='text-align:center; margin-top:20px; color:gray;'>Aucune mesure enregistrée. Cliquez sur le bouton ci-dessus.</p>";
+            
+            modalContent.innerHTML = html;
+        }
+
+        function showPedagoInfos() {
+            const tempTarget = parseInt(tempSlider.value); // Récupération de la valeur réelle
+            let conseil = "";
+            let colorClass = "";
+
+            if (isSummer && tempTarget < 22) {
+                conseil = "⚠️ <b>ATTENTION : SURCONSOMMATION</b><br>Régler la clim trop bas (en dessous de 22°C) augmente ta consommation de 20% par degré !";
+                colorClass = "#ff4444";
+            } else if (!isSummer && tempTarget > 21) {
+                conseil = "⚠️ <b>CONSEIL ÉCO</b><br>En hiver, chaque degré au-dessus de 19°C pèse lourd sur la facture. Essaie de baisser un peu.";
+                colorClass = "#ffbb33";
+            } else {
+                conseil = "✅ <b>EXCELLENT !</b><br>Tes réglages sont éco-responsables. Le COP est optimal pour la planète.";
+                colorClass = "#39ff14";
+            }
+
+            modalContent.innerHTML = `
+                <h3 style="color:var(--primary)">GUIDE PÉDAGOGIQUE DEXFORMA</h3>
+                <div style="background:rgba(255,255,255,0.1); padding:15px; border-radius:10px; border-left: 4px solid ${colorClass}; margin-bottom:20px;">
+                    <p style="margin:0; font-size:1.1rem;">${conseil}</p>
+                </div>
+                <hr style="border-color:rgba(255,255,255,0.1)">
+                <p><b>💡 LE SAVIEZ-VOUS ?</b></p>
+                <p>Le <b>COP (Coefficient de Performance)</b> actuel de <span style="color:var(--primary); font-weight:bold; font-size:1.2rem;">${currentCop.toFixed(2)}</span> signifie que :</p>
+                <p>Pour <b>1 kW</b> d'électricité payé et consommé au compteur, ta pompe à chaleur restitue <b>${currentCop.toFixed(2)} kW</b> de chaleur (ou de froid) dans la pièce.</p>
+                <p style="font-size:0.9rem; color:gray;">C'est comme si tu payais 1 baguette de pain et que le boulanger t'en donnait ${Math.floor(currentCop)} gratuites !</p>
+            `;
+        }
     </script>
 </body>
 </html>
-
