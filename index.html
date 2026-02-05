@@ -115,38 +115,6 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images
 
         /* Zone Graphique */
         .chart-wrapper { height: 120px; width: 100%; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 10px; box-sizing: border-box; }
-
-        /* Fenêtre Modale pour Infos & Historique */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: none; /* Caché par défaut */
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-        .modal-content {
-            background: var(--glass-bg);
-            border-radius: 20px;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            width: 500px;
-            max-width: 90%;
-            position: relative;
-            box-shadow: 0 0 40px rgba(0,0,0,0.5);
-        }
-        .modal-close {
-            position: absolute; top: 10px; right: 15px; background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; line-height: 1;
-        }
-        .modal-content h3 { color: var(--primary); }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
-        th { text-align: left; color: #00f2ff; border-bottom: 1px solid rgba(255,255,255,0.2); padding: 8px 0; }
-        td { padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
@@ -208,18 +176,10 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images
 
         <!-- Footer -->
         <div class="footer-controls">
-            <button class="btn" onclick="addMeasureToHistory()">📊 ENREGISTRER</button>
+            <button class="btn" onclick="alert('Historique non disponible en démo')">📊 HISTORIQUE</button>
             <button class="btn" id="ecoBtn" onclick="toggleEco()">🍃 MODE ÉCO</button>
             <button class="btn" id="nightBtn" onclick="toggleNight()">🌙 MODE NUIT</button>
-            <button class="btn" onclick="showPedagoInfos()">💡 INFOS</button>
-        </div>
-    </div>
-
-    <!-- Fenêtre Modale -->
-    <div id="modal" class="modal-overlay" onclick="closeModal(event)">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeModal()">&times;</button>
-            <div id="modal-body"></div>
+            <button class="btn" onclick="alert('Dexforma V5.0 - Système Intelligent')">⚙️ INFOS</button>
         </div>
     </div>
 
@@ -230,7 +190,6 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images
         let isNight = false;
         let currentCop = 0;
         let currentPower = 0;
-        let logs = []; // Pour stocker les données de l'historique
         
         // Elements
         const body = document.body;
@@ -239,8 +198,6 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images
         const fanSlider = document.getElementById('fanSlider');
         const fanStatus = document.getElementById('fanStatus');
         const airFlow = document.getElementById('airFlow');
-        const modal = document.getElementById('modal');
-        const modalBody = document.getElementById('modal-body');
         
         // Chart Setup
         const ctx = document.getElementById('copChart').getContext('2d');
@@ -337,7 +294,7 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images
                 fanStatus.innerText = "";
             }
         }
-        
+
         function updateVisuals() {
             // Gestion Couleur (Eco prime sur la saison)
             let color = isSummer ? '#007bff' : '#00f2ff';
@@ -347,6 +304,7 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images
             // Gestion Fond (Nuit assombrit fortement)
             const overlayOpacity = isNight ? 0.9 : 0.6;
             const imgName = isSummer ? 'été.jpg' : 'hiver.jpg';
+            const imgName = isSummer ? 'ete.jpg' : 'hiver.jpg';
             body.style.backgroundImage = `linear-gradient(rgba(0,0,0,${overlayOpacity}), rgba(0,0,0,${overlayOpacity})), url('images/${imgName}')`;
         }
 
@@ -415,68 +373,6 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images
                 p.style.animationDelay = (Math.random() * -20) + 's'; // Delay négatif pour répartition immédiate
                 airFlow.appendChild(p);
             }
-        }
-
-        // --- GESTION MODALE ---
-        function openModal() {
-            modal.style.display = 'flex';
-        }
-
-        function closeModal(event) {
-            // Ferme si on clique sur le fond ou sur le bouton 'x'
-            if (!event || event.target === modal) {
-                modal.style.display = 'none';
-            }
-        }
-
-        // --- FONCTION HISTORIQUE AMÉLIORÉE ---
-        function addMeasureToHistory() {
-            const now = new Date();
-            const time = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
-            
-            const entry = {
-                heure: time,
-                saison: isSummer ? "Été" : "Hiver",
-                conso: currentPower.toFixed(1) + " kW",
-                efficacite: currentCop.toFixed(2)
-            };
-            
-            logs.unshift(entry); // Ajoute au début
-            if(logs.length > 5) logs.pop(); // Garde les 5 dernières
-            
-            renderHistory();
-        }
-
-        function renderHistory() {
-            let html = "<h3>Dernières Mesures</h3><table><tr><th>Heure</th><th>Saison</th><th>Conso</th><th>COP</th></tr>";
-            logs.forEach(l => {
-                html += `<tr><td>${l.heure}</td><td>${l.saison}</td><td>${l.conso}</td><td>${l.efficacite}</td></tr>`;
-            });
-            html += "</table>";
-            modalBody.innerHTML = html;
-            openModal();
-        }
-
-        // --- FONCTION INFOS PÉDAGOGIQUES ---
-        function showPedagoInfos() {
-            const target = parseInt(tempSlider.value);
-            let conseil = "";
-            if (isSummer && target < 22) {
-                conseil = "⚠️ Attention : Régler la clim trop bas (en dessous de 22°C) augmente ta consommation de 20% par degré supplémentaire !";
-            } else if (!isSummer && target > 21) {
-                conseil = "⚠️ Conseil : En hiver, chaque degré au-dessus de 19°C pèse lourd sur la facture Dexforma.";
-            } else {
-                conseil = "✅ Tes réglages sont éco-responsables. Le COP est optimal.";
-            }
-
-            modalBody.innerHTML = `
-                <h3>Aide Dexforma</h3>
-                <p>${conseil}</p>
-                <hr style="border-color: rgba(255,255,255,0.1);">
-                <p><b>Le savais-tu ?</b> Le COP (Coefficient de Performance) de ${currentCop.toFixed(1)} 
-                signifie que pour 1kW d'électricité payé, la machine produit ${currentCop.toFixed(1)}kW de confort.</p>
-            `;
-            openModal();
         }
 
         // Init
