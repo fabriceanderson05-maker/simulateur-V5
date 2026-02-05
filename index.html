@@ -86,7 +86,8 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.
             box-shadow: 0 0 0 8px rgba(0,0,0,0.5), 0 0 0 10px var(--primary);
             flex-direction: column;
         }
-        .temp-big { font-size: 3.5rem; font-weight: 900; color: white; line-height: 1; }
+        .temp-big { font-size: 3.5rem; font-weight: 900; color: white; line-height: 1; font-style: italic; /* La touche magique ! */
+    display: inline-block; }
         .mode-label { font-size: 0.7rem; color: var(--accent); font-weight: bold; letter-spacing: 2px; margin-top: 5px; }
 
         /* Particules Flux d'air */
@@ -333,7 +334,7 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.
             // Gestion Fond
             let opacite = isSummer ? 0.2 : 0.5;
             
-            // Si le mode nuit est actif, on force l'obscurité (0.9)
+            // Si le mode nuit est actif, on force l'obscurité (0.7)
             if (isNight) opacite = 0.7;
 
             // Assombrissement du conteneur en mode nuit
@@ -506,4 +507,3 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.
     </script>
 </body>
 </html>
-
