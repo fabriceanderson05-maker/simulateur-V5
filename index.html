@@ -42,6 +42,7 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.
             display: flex;
             flex-direction: column;
             gap: 20px;
+            transition: background 0.5s ease;
         }
 
         /* Header */
@@ -306,6 +307,10 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.
             
             // Si le mode nuit est actif, on force l'obscurité (0.9)
             if (isNight) opacite = 0.9;
+
+            // Assombrissement du conteneur en mode nuit
+            const glassBg = isNight ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.5)';
+            document.documentElement.style.setProperty('--glass-bg', glassBg);
 
             const imgName = isSummer ? 'ete.jpg' : 'hiver.jpg';
             
