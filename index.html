@@ -26,7 +26,7 @@
             background-position: center;
             transition: background-image 1s ease-in-out;
           /* Image Hiver par défaut */
-background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images/hiver.jpg');
+background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.jpg');
         }
 
         /* Conteneur Glassmorphism */
@@ -303,7 +303,7 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images
 
             // Gestion Fond (Nuit assombrit fortement)
             const overlayOpacity = isNight ? 0.9 : 0.6;
-            const imgName = isSummer ? 'été.jpg' : 'hiver.jpg';
+            const imgName = isSummer ? 'ete.jpg' : 'hiver.jpg';
             body.style.backgroundImage = `linear-gradient(rgba(0,0,0,${overlayOpacity}), rgba(0,0,0,${overlayOpacity})), url('images/${imgName}')`;
         }
 
@@ -385,3 +385,4 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images
     </script>
 </body>
 </html>
+
