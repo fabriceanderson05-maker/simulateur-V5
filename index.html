@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dexforma - Simulateur PAC Master</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --accent: #bc00ff;
+            --eco: #39ff14;
+            --text: #e0e0e0;
+            --text-dim: #70757a;
+            --glass-bg: rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 1s ease-in-out;
+          /* Image Hiver par défaut */
+background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images/hiver.jpg');
+        }
+
+        /* Conteneur Glassmorphism */
+        .app-container {
+            width: 900px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 30px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Header */
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; }
+        .logo { font-weight: 900; letter-spacing: 2px; color: var(--primary); font-size: 1.2rem; }
+        .logo span { border: 1px solid var(--primary); padding: 2px 8px; border-radius: 4px; margin-left: 5px; color: white; font-size: 0.8rem; }
+
+        /* Grille Principale */
+        .grid-container { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 20px; }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px; border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        /* Effet au survol des blocs Analyse et Commandes */
+        .panel:hover {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border-color: #00f2ff !important; /* Petit rappel néon au survol */
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        h3 { margin: 0 0 15px 0; font-size: 0.8rem; color: white; letter-spacing: 1px; text-transform: uppercase; }
+
+        /* JAUGES */
+        .stat-group { margin-bottom: 20px; }
+        label { display: block; font-size: 0.7rem; font-weight: bold; margin-bottom: 5px; color: rgba(255,255,255,0.7); }
+        .val-text { float: right; color: var(--primary); font-weight: bold; }
+        .progress-bar { background: #000; height: 8px; border-radius: 4px; overflow: hidden; clear: both; }
+        .fill { height: 100%; background: var(--primary); transition: 0.5s ease; }
+
+        /* Thermostat Central */
+        .thermostat-box {
+            position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: radial-gradient(circle, rgba(30,34,39,0.8) 0%, rgba(13,15,18,0.8) 100%);
+            border-radius: 20px; overflow: hidden; min-height: 250px;
+        }
+        .dial {
+            width: 180px; height: 180px; border-radius: 50%; background: #1a1d23;
+            display: flex; align-items: center; justify-content: center; z-index: 2;
+            box-shadow: 0 0 0 8px rgba(0,0,0,0.5), 0 0 0 10px var(--primary);
+            flex-direction: column;
+        }
+        .temp-big { font-size: 3.5rem; font-weight: 900; color: white; line-height: 1; }
+        .mode-label { font-size: 0.7rem; color: var(--accent); font-weight: bold; letter-spacing: 2px; margin-top: 5px; }
+
+        /* Particules Flux d'air */
+        .air-flow { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; z-index: 1; }
+        .particle { position: absolute; height: 2px; background: linear-gradient(90deg, transparent, var(--primary)); border-radius: 2px; opacity: 0.5; animation: flow linear infinite; }
+        @keyframes flow { from { transform: translateX(-100px); opacity: 0; } 50% { opacity: 0.6; } to { transform: translateX(400px); opacity: 0; } }
+
+        /* Contrôles */
+        input[type=range] { width: 100%; accent-color: var(--primary); cursor: pointer; }
+        input[type=range]:disabled { cursor: not-allowed; filter: grayscale(1); opacity: 0.5; }
+        
+        /* Footer & Boutons */
+        .footer-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        /* Amélioration des textes des boutons en bas */
+        .btn {
+            color: #ffffff !important; /* Blanc pur forcé */
+            font-weight: bold !important;
+            text-shadow: 2px 2px 4px #000000; /* Ombre portée renforcée */
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            transition: all 0.3s ease;
+            padding: 10px; border-radius: 10px; cursor: pointer;
+        }
+        .btn:hover { border-color: var(--primary) !important; background: rgba(255, 255, 255, 0.2); }
+        /* État actif des boutons */
+        .btn.active { background: #00f2ff !important; color: #000000 !important; text-shadow: none !important; box-shadow: 0 0 15px #00f2ff; }
+
+        /* Zone Graphique */
+        .chart-wrapper { height: 120px; width: 100%; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 10px; box-sizing: border-box; }
+
+        /* Fenêtre Modale pour Infos & Historique */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none; /* Caché par défaut */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: var(--glass-bg);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 500px;
+            max-width: 90%;
+            position: relative;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+        .modal-close {
+            position: absolute; top: 10px; right: 15px; background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; line-height: 1;
+        }
+        .modal-content h3 { color: var(--primary); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
+        th { text-align: left; color: #00f2ff; border-bottom: 1px solid rgba(255,255,255,0.2); padding: 8px 0; }
+        td { padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">DEXFORMA <span>SIMULATEUR V5</span></div>
+            <button class="btn" id="seasonBtn" onclick="toggleSeason()">❄️ HIVER</button>
+        </header>
+
+        <div class="grid-container">
+            <!-- Gauche: Stats -->
+            <div class="panel">
+                <h3>ANALYSE TECHNIQUE</h3>
+                <div id="infoMessage" style="font-size:0.8rem; color:var(--text-dim); margin-bottom:15px; min-height:3em; font-style:italic;"></div>
+                <div class="stat-group">
+                    <label>EFFICACITÉ (COP) <span class="val-text" id="copVal">0.0</span></label>
+                    <div class="progress-bar"><div class="fill" id="copBar"></div></div>
+                </div>
+                <div class="stat-group">
+                    <label>CONSOMMATION <span class="val-text" id="powerVal">0 kW</span></label>
+                    <div class="progress-bar"><div class="fill" id="consomBar"></div></div>
+                </div>
+                <div style="margin-top:20px; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px; text-align:center;">
+                    <span style="display:block; font-size:0.6rem; color:var(--eco);">ÉCONOMIE / JOUR</span>
+                    <span id="ecoSavings" style="font-size:1.2rem; font-weight:bold; color:var(--eco);">0.00 €</span>
+                </div>
+            </div>
+
+            <!-- Centre: Cadran -->
+            <div class="thermostat-box">
+                <div class="air-flow" id="airFlow"></div>
+                <div class="dial">
+                    <div class="temp-big" id="displayTemp">22°</div>
+                    <div class="mode-label" id="modeText">CHAUFFAGE</div>
+                </div>
+            </div>
+
+            <!-- Droite: Commandes -->
+            <div class="panel">
+                <h3>COMMANDES</h3>
+                <label style="font-size:0.7rem; font-weight:bold;">TEMPÉRATURE CIBLE</label>
+                <div id="targetText" style="font-size:1.5rem; font-weight:bold; color:var(--primary); text-align:center; margin:5px 0;">22°C</div>
+                <input type="range" id="tempSlider" min="16" max="30" value="22" oninput="updateSystem()">
+                
+                <br><br>
+                <label style="font-size:0.7rem; font-weight:bold;">VENTILATION <span id="fanStatus" style="font-size:0.6rem; color:var(--eco);"></span></label>
+                <input type="range" id="fanSlider" min="1" max="10" value="5" oninput="updateSystem()">
+                <div class="stat-group" style="margin-top:25px;">
+                    <label>TEMP. EXTÉRIEURE <span class="val-text" id="extTempVal">5°C</span></label>
+                    <div class="progress-bar"><div class="fill" id="extTempBar"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphique Chart.js -->
+        <div class="chart-wrapper">
+            <canvas id="copChart"></canvas>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-controls">
+            <button class="btn" onclick="addMeasureToHistory()">📊 ENREGISTRER</button>
+            <button class="btn" id="ecoBtn" onclick="toggleEco()">🍃 MODE ÉCO</button>
+            <button class="btn" id="nightBtn" onclick="toggleNight()">🌙 MODE NUIT</button>
+            <button class="btn" onclick="showPedagoInfos()">💡 INFOS</button>
+        </div>
+    </div>
+
+    <!-- Fenêtre Modale -->
+    <div id="modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        let isSummer = false;
+        let isEco = false;
+        let isNight = false;
+        let currentCop = 0;
+        let currentPower = 0;
+        let logs = []; // Pour stocker les données de l'historique
+        
+        // Elements
+        const body = document.body;
+        const seasonBtn = document.getElementById('seasonBtn');
+        const tempSlider = document.getElementById('tempSlider');
+        const fanSlider = document.getElementById('fanSlider');
+        const fanStatus = document.getElementById('fanStatus');
+        const airFlow = document.getElementById('airFlow');
+        const modal = document.getElementById('modal');
+        const modalBody = document.getElementById('modal-body');
+        
+        // Chart Setup
+        const ctx = document.getElementById('copChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array(20).fill(''),
+                datasets: [{
+                    label: 'Consommation (kW)',
+                    data: Array(20).fill(0),
+                    borderColor: '#00f2ff',
+                    backgroundColor: 'rgba(0, 242, 255, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        min: 0, 
+                        max: 8, // Échelle 0-8kW pour la consommation
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                    },
+                    x: { display: false }
+                },
+                plugins: { 
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'Évolution de la Consommation',
+                        color: 'rgba(255, 255, 255, 0.7)'
+                    }
+                },
+                maintainAspectRatio: false
+            }
+        });
+
+        function toggleSeason() {
+            isSummer = !isSummer;
+            
+            if(isSummer) {
+                // Summer Settings
+                seasonBtn.innerText = "☀️ ÉTÉ";
+                document.getElementById('modeText').innerText = "CLIMATISATION";
+                tempSlider.value = 17; // Default Summer
+            } else {
+                // Winter Settings
+                seasonBtn.innerText = "❄️ HIVER";
+                document.getElementById('modeText').innerText = "CHAUFFAGE";
+                tempSlider.value = 22; // Default Winter
+            }
+            updateVisuals();
+            updateSystem();
+        }
+
+        function toggleEco() {
+            isEco = !isEco;
+            if(isEco) {
+                isNight = false; // Exclusive
+                document.getElementById('nightBtn').classList.remove('active');
+            }
+            document.getElementById('ecoBtn').classList.toggle('active', isEco);
+            checkLocks();
+            updateVisuals();
+            updateSystem();
+        }
+
+        function toggleNight() {
+            isNight = !isNight;
+            if(isNight) {
+                isEco = false; // Exclusive
+                document.getElementById('ecoBtn').classList.remove('active');
+            }
+            document.getElementById('nightBtn').classList.toggle('active', isNight);
+            checkLocks();
+            updateVisuals();
+            updateSystem();
+        }
+
+        function checkLocks() {
+            if(isNight) {
+                fanSlider.value = 1;
+                fanSlider.disabled = true;
+                fanStatus.innerText = "(SILENCE ACTIF)";
+            } else if(isEco) {
+                fanSlider.value = 3;
+                fanSlider.disabled = true;
+                fanStatus.innerText = "(ÉCO ACTIF)";
+            } else {
+                fanSlider.disabled = false;
+                fanStatus.innerText = "";
+            }
+        }
+        
+        function updateVisuals() {
+            // Gestion Couleur (Eco prime sur la saison)
+            let color = isSummer ? '#007bff' : '#00f2ff';
+            if(isEco) color = '#39ff14';
+            document.documentElement.style.setProperty('--primary', color);
+
+            // Gestion Fond (Nuit assombrit fortement)
+            const overlayOpacity = isNight ? 0.9 : 0.6;
+            const imgName = isSummer ? 'été.jpg' : 'hiver.jpg';
+            body.style.backgroundImage = `linear-gradient(rgba(0,0,0,${overlayOpacity}), rgba(0,0,0,${overlayOpacity})), url('images/${imgName}')`;
+        }
+
+        function updateSystem() {
+            const target = parseInt(tempSlider.value);
+            const fanSpeed = parseInt(fanSlider.value);
+            
+            // Display Updates
+            document.getElementById('displayTemp').innerText = target + "°";
+            document.getElementById('targetText').innerText = target + "°C";
+
+            // Physics Simulation
+            const extTemp = isSummer ? 30 : 5;
+            const delta = Math.abs(target - extTemp);
+            
+            // COP Calculation
+            let cop = isSummer ? 3.5 : 4.2;
+            cop = cop - (delta * 0.05) + (fanSpeed * 0.02);
+            if(isEco) cop += 0.5;
+            currentCop = cop;
+            
+            // Message Update
+            const msgEl = document.getElementById('infoMessage');
+            if(isSummer) {
+                msgEl.innerText = "Mode Été : Extraction calorique active. Efficacité optimale Dexforma.";
+            } else {
+                msgEl.innerText = `Mode Hiver : Le COP de ${cop.toFixed(2)} transforme 1kW en ${cop.toFixed(2)}kW utiles.`;
+            }
+
+            // Power & Savings
+            let power = (delta * 0.1) * (fanSpeed / 5);
+            if(isNight) power *= 0.8;
+            currentPower = parseFloat(power.toFixed(1));
+            
+            const savings = (power * cop * 0.15 * 24).toFixed(2); // Fake formula
+
+            // Update DOM
+            document.getElementById('copVal').innerText = cop.toFixed(2); // For the text value
+            document.getElementById('copBar').style.width = (cop / 6 * 100) + "%"; // As a percentage of max=6
+            document.getElementById('powerVal').innerText = currentPower + " kW";
+            document.getElementById('consomBar').style.width = (power / 5 * 100) + "%"; // As a percentage of an arbitrary max=5kW
+            document.getElementById('extTempVal').innerText = extTemp + "°C";
+            document.getElementById('extTempBar').style.width = ((extTemp + 10) / 50 * 100) + "%"; // Scale from -10 to 40
+            document.getElementById('ecoSavings').innerText = savings + " €";
+            
+            // Update Particles
+            airFlow.style.opacity = fanSpeed / 10;
+        }
+
+        function updateChart(val) {
+    if (!chart) return;
+    const data = chart.data.datasets[0].data;
+    data.shift();
+    data.push(val); // On pousse exactement la valeur reçue (2.8)
+    chart.update('none');
+}
+        function initPermanentWind() {
+            airFlow.innerHTML = '';
+            const count = 50; // Nombre fixe de particules
+            for(let i=0; i<count; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.top = Math.random() * 100 + '%';
+                p.style.width = (Math.random() * 50 + 20) + 'px';
+                p.style.animationDuration = (Math.random() * 2 + 1) + 's'; 
+                p.style.animationDelay = (Math.random() * -20) + 's'; // Delay négatif pour répartition immédiate
+                airFlow.appendChild(p);
+            }
+        }
+
+        // --- GESTION MODALE ---
+        function openModal() {
+            modal.style.display = 'flex';
+        }
+
+        function closeModal(event) {
+            // Ferme si on clique sur le fond ou sur le bouton 'x'
+            if (!event || event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // --- FONCTION HISTORIQUE AMÉLIORÉE ---
+        function addMeasureToHistory() {
+            const now = new Date();
+            const time = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+            
+            const entry = {
+                heure: time,
+                saison: isSummer ? "Été" : "Hiver",
+                conso: currentPower.toFixed(1) + " kW",
+                efficacite: currentCop.toFixed(2)
+            };
+            
+            logs.unshift(entry); // Ajoute au début
+            if(logs.length > 5) logs.pop(); // Garde les 5 dernières
+            
+            renderHistory();
+        }
+
+        function renderHistory() {
+            let html = "<h3>Dernières Mesures</h3><table><tr><th>Heure</th><th>Saison</th><th>Conso</th><th>COP</th></tr>";
+            logs.forEach(l => {
+                html += `<tr><td>${l.heure}</td><td>${l.saison}</td><td>${l.conso}</td><td>${l.efficacite}</td></tr>`;
+            });
+            html += "</table>";
+            modalBody.innerHTML = html;
+            openModal();
+        }
+
+        // --- FONCTION INFOS PÉDAGOGIQUES ---
+        function showPedagoInfos() {
+            const target = parseInt(tempSlider.value);
+            let conseil = "";
+            if (isSummer && target < 22) {
+                conseil = "⚠️ Attention : Régler la clim trop bas (en dessous de 22°C) augmente ta consommation de 20% par degré supplémentaire !";
+            } else if (!isSummer && target > 21) {
+                conseil = "⚠️ Conseil : En hiver, chaque degré au-dessus de 19°C pèse lourd sur la facture Dexforma.";
+            } else {
+                conseil = "✅ Tes réglages sont éco-responsables. Le COP est optimal.";
+            }
+
+            modalBody.innerHTML = `
+                <h3>Aide Dexforma</h3>
+                <p>${conseil}</p>
+                <hr style="border-color: rgba(255,255,255,0.1);">
+                <p><b>Le savais-tu ?</b> Le COP (Coefficient de Performance) de ${currentCop.toFixed(1)} 
+                signifie que pour 1kW d'électricité payé, la machine produit ${currentCop.toFixed(1)}kW de confort.</p>
+            `;
+            openModal();
+        }
+
+        // Init
+        initPermanentWind();
+        updateSystem();
+
+        // Boucle de mise à jour du graphique (Rythme cardiaque : 1 seconde)
+        setInterval(() => {
+            updateChart(currentPower);
+        }, 1000);
+    </script>
+</body>
+</html>
