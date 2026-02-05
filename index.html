@@ -303,10 +303,10 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.
             document.documentElement.style.setProperty('--primary', color);
 
             // Gestion Fond
-            let opacite = isSummer ? 0.4 : 0.7;
+            let opacite = isSummer ? 0.2 : 0.6;
             
             // Si le mode nuit est actif, on force l'obscurité (0.9)
-            if (isNight) opacite = 0.9;
+            if (isNight) opacite = 0.8;
 
             // Assombrissement du conteneur en mode nuit
             const glassBg = isNight ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.5)';
@@ -398,3 +398,4 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('hiver.
     </script>
 </body>
 </html>
+
