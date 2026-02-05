@@ -294,7 +294,7 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images
                 fanStatus.innerText = "";
             }
         }
-        
+
         function updateVisuals() {
             // Gestion Couleur (Eco prime sur la saison)
             let color = isSummer ? '#007bff' : '#00f2ff';
@@ -303,6 +303,7 @@ background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('images
 
             // Gestion Fond (Nuit assombrit fortement)
             const overlayOpacity = isNight ? 0.9 : 0.6;
+            const imgName = isSummer ? 'ete.jpg' : 'hiver.jpg';
             const imgName = isSummer ? 'été.jpg' : 'hiver.jpg';
             body.style.backgroundImage = `linear-gradient(rgba(0,0,0,${overlayOpacity}), rgba(0,0,0,${overlayOpacity})), url('images/${imgName}')`;
         }
